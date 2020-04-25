@@ -24,8 +24,9 @@ optional arguments:
   -l , --limit     Limit resurive search deep (Default: infinite)
   -o , --output    Output result into a file.
   ```
-  Example:
-  Recursive limited by 2 sub links.
+  Examples:
   ```
   python SLISearcher.py -u https://this-page-intentionally-left-blank.org/ -r -l 2
+  python SLISearcher.py -U link_file.txt -S secure_links
+  
   ```
