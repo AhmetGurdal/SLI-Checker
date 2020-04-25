@@ -1,0 +1,6 @@
+{
+	"mechanisms":["https","http","file","ftp","news","nntp","gopher","telnet","cid","mid","afs","prospero","x-exec"],
+	"link": "(https|ftp|http|file|news|nntp|gopher|telnet|cid|mid|afs|prospero|x-exec)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?"
+}
+
+
