@@ -44,11 +44,8 @@ def search_links(parents,url):
 					pass
 			
 					### Ends here. Will be edited later.	
-	#print({url:links})
-	return links				
 
-		#print(secure_list)
-		#print(insecure_list)			
+	return links				
 
 def group_links(urls):
 	print("Group it")
@@ -126,7 +123,8 @@ def print_groups(links, isPrint):
 	for m in jdata['mechanisms']:
 		mechanisms[m] = list()
 	mechanisms['others'] = list()
-	links = get_all_links(links, [], True)
+	if(type(links) == dict):
+		links = get_all_links(links, [], True)
 	for l in links:
 		added = False
 		for m in mechanisms.keys():
@@ -149,7 +147,7 @@ def print_groups(links, isPrint):
 		return mechanisms
 
 	
-def print_insecure(links):
+def print_insecure(links,isPrint):
 	insecure = list()
 	
 	for l in links:
@@ -157,24 +155,43 @@ def print_insecure(links):
 			base_url = list(l.keys())[0]
 			sub_links = get_all_links(l[base_url],[],True)
 			base_url = get_domain(base_url)
+			secure_list.append(base_url)
 			
-			for s in sub_links:
-				if(base_url not in s):
-					insecure.append(s)
-	
-	if(len(insecure)> 0):
-		print("FOUND POSSIBLE INSECURE LINKS")
-		print("-----------------------------")
-		for i in insecure:
-			print(i)
+			for l in sub_links:
+				isSecure = False
+				for s in secure_list:
+					if(s in l):
+						isSecure = True
+				if(not isSecure):
+					insecure.append(l)
+					
+	if(isPrint):
+		if(len(insecure)> 0):
+			
+			print("FOUND POSSIBLE INSECURE LINKS")
+			print("-----------------------------")
+			for i in insecure:
+				print(i)
+		else:
+			print("No insecure link found")
 	else:
-		print("No insecure link found")
+		return insecure
 
 
 def print_igroup(links):
-	print("Test")
+	links = print_insecure(links,False)
+	print("FOUND POSSIBLE INSECURE LINKS")
+	print("-----------------------------")
+	print_groups(links,True)
+
+
 def print_all(links):
-	print("All")
+	links = get_all_links(links,[],True)
+	print("FOUND LINKS")
+	print("-----------")
+	for l in links:
+		print(l)
+
 
 
 def main():
@@ -206,6 +223,30 @@ def main():
 	
 	args = parser.parse_args()
 	
+
+
+	if(args.slink):
+		if(check_url_isvalid(args.slink)):
+			secure_list.append(args.slink)
+
+	elif(args.sfile):
+		with open(args.sfile) as fp:
+			lines = fp.readlines()
+			for s in lines:
+				if(check_url_isvalid(s)):
+					if("\n" in s):
+						secure_list.append(s[:-1])
+					else:
+						secure_list.append(s)
+	if(len(secure_list) > 0):
+		print("SECURE LIST")
+		print("-----------")
+		for s in secure_list:
+			print(s)
+		print("-----------")
+
+	print("Process is started...")
+
 
 	links = list()
 
@@ -244,28 +285,25 @@ def main():
 			raise Exception("File is not found")
 	else:
 		parser.print_help()
-	
+		
 	if(args.recursive):
 		if(args.limit):
 			links = recursive(links, args.limit,[],args.limit)
 		else:
 			links = recursive(links, -1, [], -1)
-	#	for k in links.keys():
-	#		for m in links[k].keys():
-	#			if('http' in m):
+
+	
 
 	if(args.all):
 		print_all(links)
 	elif(args.group):
 		print_groups(links, True)
 	elif(args.insecure):
-		print_insecure(links)
+		print_insecure(links, True)
 	elif(args.igroup):
 		print_igroup(links)
 	else:
 		print(links)
-
-
 
 
 
