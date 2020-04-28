@@ -7,7 +7,6 @@ import sys
 import json
 
 
-
 def check_url_isvalid(url):
 	if(re.match(jdata['link'],url)):	
 		return True
@@ -33,10 +32,10 @@ def search_links(parents,url):
 					if(url == found):
 						continue
 
-					#for p in parents:
-						#if(p == found or urlopen(p).read() == sData):
-						#	isparent = True
-						#	break
+					for p in parents:
+						if(p == found or urlopen(p).read() == sData):
+							isparent = True
+							break
 					
 					if(not isparent): 
 						if(sData != urlopen(found).read()):
@@ -57,6 +56,8 @@ def group_links(urls):
 def get_domain(url):
 	### Will be edited
 	domain = url[url.find("/") + 2:]
+	if(domain.find("/") != -1):
+		domain = domain[:domain.find("/")]
 	return domain
 
 def create_string(links,args):
@@ -100,34 +101,74 @@ def recursive(links,rec,parents,frec):
 	return links
 
 
-def get_all_links(links):
-	return links
+def get_all_links(links, ret, isAll):
+	for l in links:
+		if(type(l) == dict):
+			key = list(l.keys())[0]
+			if(key not in ret):
+				ret.append(key)
+			if(isAll):
+				for k in l[key]:
+					if(type(k) == dict):
+						ret = get_all_links([k],ret,True)
+					else:
+						if(k not in ret):
+							ret.append(k)
+		else:
+			if(l not in ret):
+				ret.append(l)
+	return ret
+			
 
-def print_groups(links):
+
+def print_groups(links, isPrint):
 	mechanisms = dict()
 	for m in jdata['mechanisms']:
 		mechanisms[m] = list()
 	mechanisms['others'] = list()
-	links = get_all_links(links)
+	links = get_all_links(links, [], True)
 	for l in links:
 		added = False
 		for m in mechanisms.keys():
 			if(m in l[:7]):
 				mechanisms[m].append(l)
 				added = True
+				break
 		if(not added):
 			mechanisms['others'].append(l)
 
-	for m in mechanisms.keys():
-		print("{} LINKS".format(m.upper()))
-		print("-------------------")
-		for l in mechanisms[m]:
-			print(l)
-		print("")
+	if(isPrint):
+		for m in mechanisms.keys():
+			if(len(mechanisms[m])>0):
+				print("{} LINKS".format(m.upper()))
+				print("-------------------")
+				for l in mechanisms[m]:
+					print(l)
+				print("")
+	else:
+		return mechanisms
 
 	
 def print_insecure(links):
 	insecure = list()
+	
+	for l in links:
+		if(type(l) == dict):
+			base_url = list(l.keys())[0]
+			sub_links = get_all_links(l[base_url],[],True)
+			base_url = get_domain(base_url)
+			
+			for s in sub_links:
+				if(base_url not in s):
+					insecure.append(s)
+	
+	if(len(insecure)> 0):
+		print("FOUND POSSIBLE INSECURE LINKS")
+		print("-----------------------------")
+		for i in insecure:
+			print(i)
+	else:
+		print("No insecure link found")
 
 
 def print_igroup(links):
@@ -171,8 +212,6 @@ def main():
 	if(args.url):
 		#print("Returned urls: " + args.url)
 		if(check_url_isvalid(args.url)):
-			secure_domains[args.url] = list()
-			secure_domains[args.url].append(get_domain(args.url))
 			result = search_links([],args.url)
 			if(len(result) > 0):
 				links.append({args.url:result})
@@ -218,7 +257,7 @@ def main():
 	if(args.all):
 		print_all(links)
 	elif(args.group):
-		print_groups(links)
+		print_groups(links, True)
 	elif(args.insecure):
 		print_insecure(links)
 	elif(args.igroup):
@@ -231,7 +270,6 @@ def main():
 
 
 if __name__ == '__main__':
-	secure_domains = dict()
 	secure_list = list()
 	insecure_list = list()
 	with open("settings.json") as jfile:
