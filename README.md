@@ -15,7 +15,7 @@ Format of the Secure_list.txt file.
 
 ```
 
-Example Secure_list.txt [File](./Example/secure_test.txt)
+Example Secure_list.txt [File](https://github.com/AhmetGurdal/SLI-Checker/blob/master/Examples/secure_test.txt)
 ```
 http://www.google.com :: https://maps.google.com.tr | https://play.google.com | https://www.youtube.com
 ```
