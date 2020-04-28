@@ -1,3 +1,2 @@
-https://maps.google.com.tr
-https://play.google.com
-https://www.youtube.com
+https://www.google.com :: https://maps.google.com.tr | https://play.google.com | https://www.youtube.com
+https://www.
