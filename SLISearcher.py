@@ -130,7 +130,7 @@ def print_groups(links, isPrint):
 	for m in jdata['mechanisms']:
 		mechanisms[m] = list()
 	mechanisms['others'] = list()
-	if(type(links) == dict):
+	if(type(links) == list):
 		links = get_all_links(links, [], True)
 	for l in links:
 		added = False
@@ -172,11 +172,11 @@ def print_insecure(links,isPrint, isReturn):
 			base_url = list(l.keys())[0]
 			sub_links = get_all_links(l[base_url],[],True)
 			secure_list[base_url].append(get_domain(base_url))
-			length = len(base_url) + 3
+			#length = len(base_url) + 3
 			for l in sub_links:
 				isSecure = False
 				for s in secure_list[base_url]:
-					if(s in l[:length]):
+					if(s in l[:len(s) + len(base_url)]):
 						isSecure = True
 				if(not isSecure):
 					insecure.append(l)
@@ -234,7 +234,7 @@ def main():
 	securegroup = parser.add_mutually_exclusive_group()
 	
 	urlgroup.add_argument('-u', '--url', metavar='', help='Url to check', type=str)
-	urlgroup.add_argument('-U', '--urlfile', metavar='', help='sum the integers (Default: find the max)\n\n', type=str)
+	urlgroup.add_argument('-U', '--urlfile', metavar='', help='Urls to check. Format: Each line should contain 1 valid url', type=str)
 
 	outgroup.add_argument('-a', '--all', help='Show all secure and insecure links', action='store_true')
 	outgroup.add_argument('-g', '--group', help='Group by services', action='store_true')
@@ -242,25 +242,15 @@ def main():
 	outgroup.add_argument('-ig','--igroup', help='(Default Choose) - Show just insecure links grouped by services', action='store_true')
 	
 	securegroup.add_argument('-s','--slink', metavar='' ,help='Secure link', type=str)
-	securegroup.add_argument('-S','--sfile', metavar='' ,help='Secure links file', type=str)
+	securegroup.add_argument('-S','--sfile', metavar='' ,help='Secure links file. Format: base_url :: secure_url1 | secure_url2', type=str)
 	
 	parser.add_argument('-r','--recursive', help='Active recursive search', action='store_true')
-	parser.add_argument('-l','--limit', metavar='', help='Limit resurive search deep (Default: infinite)', type=int)
+	parser.add_argument('-l','--limit', metavar='', help='Limit resursive search depth (Default: 5 give "-l -1" to remove limit)', type=int)
 	parser.add_argument('-o', '--output', metavar='', help='Output result into a file.', type=str)
 	
 	args = parser.parse_args()
 	
 
-
-	
-	if(len(secure_list) > 0):
-		print("SECURE LIST")
-		print("-----------")
-		for s in secure_list:
-			print(s)
-		print("-----------")
-
-	print("Process is started...")
 
 
 	links = list()
@@ -281,7 +271,7 @@ def main():
 						base = l[:l.find("::")]
 						if(base in args.url):
 							
-							for s in l[l.find("::") + 2 : ].split("|"): 
+							for s in l[l.find("::") + 2 : ].split("|"):
 								if("\n" in s):
 									secure_list[base].append(s[:-1])
 								else:
@@ -295,8 +285,7 @@ def main():
 		else:
 			raise Exception("Can't find a valid link")
 		
-			
-		
+				
 		#print(parser.parse_args())
 	elif(args.urlfile):
 		try:
@@ -304,7 +293,6 @@ def main():
 				lines = fp.readlines()
 				print("Used file is: " + args.urlfile + "\n--------------" + ("-" * len(args.urlfile)) + "\n")
 				for l in lines:
-					print(l)
 					if(check_url_isvalid(l)):
 						secure_list[l] = list()
 						if(args.slink):
@@ -316,12 +304,11 @@ def main():
 								for line in lines:
 									line = line.replace(" ", "")
 									base = line[:line.find("::")]
-									if(base in l):
-										for s in line[line.find("::") + 2 : ].split("|"):
-											if("\n" in s):
-												secure_list[base].append(s[:-1])
-											else:
-												secure_list[base].append(s)
+									for s in line[line.find("::") + 2 : ].split("|"):
+										if("\n" in s):
+											secure_list[base].append(s[:-1])
+										else:
+											secure_list[base].append(s)
 
 
 						print("Process")
@@ -336,13 +323,24 @@ def main():
 			raise Exception("File is not found")
 	else:
 		parser.print_help()
+	if(len(secure_list) > 0):
+		print("SECURE LIST")
+		print("-----------")
+		for s in secure_list:
+			print(s)
+			print("-" * len(s))
+			for v in secure_list[s]:
+				print(v)
+		print("-----------")
+
+	print("Process is started...")
 
 	
 	if(args.recursive):
 		if(args.limit):
 			links = recursive(links, args.limit,[],args.limit)
 		else:
-			links = recursive(links, -1, [], -1)
+			links = recursive(links, 5, [], 5)
 
 	
 

@@ -1,1 +1,1 @@
-http://bim.akdeniz.edu.tr/akdeniz-universitesi-e-posta-islemleri/ :: akdeniz.edu.tr
+http://bim.akdeniz.edu.tr :: akdeniz.edu.tr | https://yoksis.yok.gov.tr
