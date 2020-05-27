@@ -116,7 +116,14 @@ def get_all_links(links, ret, isAll):
 				ret.append(l)
 	return ret
 			
-
+def create_output(links, isPrint):
+	print(links)
+	with open(isPrint, "w") as f:
+		for l in links:
+			f.write(l)
+			f.write("\n")
+	print("{} file is created.".format(isPrint))
+		
 
 def print_groups(links, isPrint):
 	mechanisms = dict()
@@ -136,6 +143,18 @@ def print_groups(links, isPrint):
 			mechanisms['others'].append(l)
 
 	if(isPrint):
+		output = list()
+		for m in mechanisms.keys():
+			if(len(mechanisms[m])>0):
+				output.append("{} LINKS".format(m.upper()))
+				output.append("-------------------")
+				for l in mechanisms[m]:
+					output.append(l)
+				output.append("")
+
+		create_output(output,isPrint)
+
+	else:
 		for m in mechanisms.keys():
 			if(len(mechanisms[m])>0):
 				print("{} LINKS".format(m.upper()))
@@ -143,29 +162,33 @@ def print_groups(links, isPrint):
 				for l in mechanisms[m]:
 					print(l)
 				print("")
-	else:
-		return mechanisms
 
 	
-def print_insecure(links,isPrint):
+def print_insecure(links,isPrint, isReturn):
 	insecure = list()
 	
 	for l in links:
 		if(type(l) == dict):
 			base_url = list(l.keys())[0]
 			sub_links = get_all_links(l[base_url],[],True)
-			base_url = get_domain(base_url)
-			secure_list.append(base_url)
-			
+			secure_list[base_url].append(get_domain(base_url))
+			length = len(base_url) + 3
 			for l in sub_links:
 				isSecure = False
-				for s in secure_list:
-					if(s in l):
+				for s in secure_list[base_url]:
+					if(s in l[:length]):
 						isSecure = True
 				if(not isSecure):
 					insecure.append(l)
 					
 	if(isPrint):
+		insecure.insert(0,"-----------------------------")
+		insecure.insert(0,"FOUND POSSIBLE INSECURE LINKS")
+		create_output(insecure,isPrint)
+	if(isReturn):
+		return insecure
+
+	else:
 		if(len(insecure)> 0):
 			
 			print("FOUND POSSIBLE INSECURE LINKS")
@@ -174,23 +197,27 @@ def print_insecure(links,isPrint):
 				print(i)
 		else:
 			print("No insecure link found")
-	else:
-		return insecure
 
 
-def print_igroup(links):
-	links = print_insecure(links,False)
-	print("FOUND POSSIBLE INSECURE LINKS")
-	print("-----------------------------")
-	print_groups(links,True)
+def print_igroup(links, isPrint):
+	links = print_insecure(links,False,True)
+	print_groups(links,isPrint)
+		
 
 
-def print_all(links):
+def print_all(links, isPrint):
 	links = get_all_links(links,[],True)
-	print("FOUND LINKS")
-	print("-----------")
-	for l in links:
-		print(l)
+	if(isPrint):
+		links.insert(0,"-----------")
+		links.insert(0,"FOUND LINKS")
+		create_output(links,isPrint)
+	else:
+		print("FOUND LINKS")
+		print("-----------")
+		for l in links:
+			print(l)
+
+
 
 
 
@@ -225,19 +252,7 @@ def main():
 	
 
 
-	if(args.slink):
-		if(check_url_isvalid(args.slink)):
-			secure_list.append(args.slink)
-
-	elif(args.sfile):
-		with open(args.sfile) as fp:
-			lines = fp.readlines()
-			for s in lines:
-				if(check_url_isvalid(s)):
-					if("\n" in s):
-						secure_list.append(s[:-1])
-					else:
-						secure_list.append(s)
+	
 	if(len(secure_list) > 0):
 		print("SECURE LIST")
 		print("-----------")
@@ -253,6 +268,25 @@ def main():
 	if(args.url):
 		#print("Returned urls: " + args.url)
 		if(check_url_isvalid(args.url)):
+			secure_list[args.url] = list()
+
+			if(args.slink):
+				secure_list[args.url].append(args.slink)
+			
+			elif(args.sfile):
+				with open(args.sfile) as fp:
+					lines = fp.readlines()
+					for l in lines:
+						l = l.replace(" ", "")
+						base = l[:l.find("::")]
+						if(base in args.url):
+							
+							for s in l[l.find("::") + 2 : ].split("|"): 
+								if("\n" in s):
+									secure_list[base].append(s[:-1])
+								else:
+									secure_list[base].append(s)
+
 			result = search_links([],args.url)
 			if(len(result) > 0):
 				links.append({args.url:result})
@@ -270,22 +304,40 @@ def main():
 				lines = fp.readlines()
 				print("Used file is: " + args.urlfile + "\n--------------" + ("-" * len(args.urlfile)) + "\n")
 				for l in lines:
+					print(l)
 					if(check_url_isvalid(l)):
-						secure_domains[l] = list()
-						secure_domains[l].append(get_domain(l))
+						secure_list[l] = list()
+						if(args.slink):
+							secure_list[l].append(args.slink)
+
+						elif(args.sfile):
+							with open(args.sfile) as fp:
+								lines = fp.readlines()
+								for line in lines:
+									line = line.replace(" ", "")
+									base = line[:line.find("::")]
+									if(base in l):
+										for s in line[line.find("::") + 2 : ].split("|"):
+											if("\n" in s):
+												secure_list[base].append(s[:-1])
+											else:
+												secure_list[base].append(s)
+
+
+						print("Process")
 						result = search_links([],l)
 						
 						if(len(result) > 0):
 							links.append({l:result})
 						else:
 							links.append(l)
-						
-
+					
 		except:
 			raise Exception("File is not found")
 	else:
 		parser.print_help()
-		
+
+	
 	if(args.recursive):
 		if(args.limit):
 			links = recursive(links, args.limit,[],args.limit)
@@ -295,20 +347,22 @@ def main():
 	
 
 	if(args.all):
-		print_all(links)
+		print_all(links, args.output)
 	elif(args.group):
-		print_groups(links, True)
+		print_groups(links, args.output)
 	elif(args.insecure):
-		print_insecure(links, True)
+		print_insecure(links, args.output, False)
 	elif(args.igroup):
-		print_igroup(links)
+		print_igroup(links, args.output)
 	else:
-		print(links)
-
+		if(args.output):
+			create_output(get_all_links(links,[],True),args.output)
+		else:
+			print(links)
 
 
 if __name__ == '__main__':
-	secure_list = list()
+	secure_list = dict()
 	insecure_list = list()
 	with open("settings.json") as jfile:
 		jdata = json.load(jfile)
