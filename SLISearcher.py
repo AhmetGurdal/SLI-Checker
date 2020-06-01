@@ -1,3 +1,5 @@
+#!/bin/python3
+
 import argparse
 from urllib.request import urlopen
 import os
@@ -218,38 +220,8 @@ def print_all(links, isPrint):
 			print(l)
 
 
+def main(args):
 
-
-
-def main():
-
-	parser = argparse.ArgumentParser(description='''Description: Check for the Spam Link Injection. \
-		Only most popular mechanisms are added.\n You can edit the settings. \
-		Json file to add or delete mechanisms\n
-		\nEx: python SLISearcher.py -u https://www.google.com -r -l 2 -o output.txt''')
-
-	
-	urlgroup = parser.add_mutually_exclusive_group()
-	outgroup = parser.add_mutually_exclusive_group()
-	securegroup = parser.add_mutually_exclusive_group()
-	
-	urlgroup.add_argument('-u', '--url', metavar='', help='Url to check', type=str)
-	urlgroup.add_argument('-U', '--urlfile', metavar='', help='Urls to check. Format: Each line should contain 1 valid url', type=str)
-
-	outgroup.add_argument('-a', '--all', help='Show all secure and insecure links', action='store_true')
-	outgroup.add_argument('-g', '--group', help='Group by services', action='store_true')
-	outgroup.add_argument('-i', '--insecure', help='Show just insecure links', action='store_true')
-	outgroup.add_argument('-ig','--igroup', help='(Default Choose) - Show just insecure links grouped by services', action='store_true')
-	
-	securegroup.add_argument('-s','--slink', metavar='' ,help='Secure link', type=str)
-	securegroup.add_argument('-S','--sfile', metavar='' ,help='Secure links file. Format: base_url :: secure_url1 | secure_url2', type=str)
-	
-	parser.add_argument('-r','--recursive', help='Active recursive search', action='store_true')
-	parser.add_argument('-l','--limit', metavar='', help='Limit resursive search depth (Default: 5 give "-l -1" to remove limit)', type=int)
-	parser.add_argument('-o', '--output', metavar='', help='Output result into a file.', type=str)
-	
-	args = parser.parse_args()
-	
 
 
 
@@ -362,7 +334,36 @@ def main():
 if __name__ == '__main__':
 	secure_list = dict()
 	insecure_list = list()
-	with open("settings.json") as jfile:
+	
+	parser = argparse.ArgumentParser(description='''Description: Check for the Spam Link Injection. \
+	Only most popular mechanisms are added.\n You can edit the settings. \
+	Json file to add or delete mechanisms\n
+	\nEx: python SLISearcher.py -u https://www.google.com -r -l 2 -o output.txt''')
+
+	
+	urlgroup = parser.add_mutually_exclusive_group()
+	outgroup = parser.add_mutually_exclusive_group()
+	securegroup = parser.add_mutually_exclusive_group()
+	
+	urlgroup.add_argument('-u', '--url', metavar='', help='Url to check', type=str)
+	urlgroup.add_argument('-U', '--urlfile', metavar='', help='Urls to check. Format: Each line should contain 1 valid url', type=str)
+
+	outgroup.add_argument('-a', '--all', help='Show all secure and insecure links', action='store_true')
+	outgroup.add_argument('-g', '--group', help='Group by services', action='store_true')
+	outgroup.add_argument('-i', '--insecure', help='Show just insecure links', action='store_true')
+	outgroup.add_argument('-ig','--igroup', help='(Default Choose) - Show just insecure links grouped by services', action='store_true')
+	
+	securegroup.add_argument('-s','--slink', metavar='' ,help='Secure link', type=str)
+	securegroup.add_argument('-S','--sfile', metavar='' ,help='Secure links file. Format: base_url :: secure_url1 | secure_url2', type=str)
+	
+	parser.add_argument('-r','--recursive', help='Active recursive search', action='store_true')
+	parser.add_argument('-l','--limit', metavar='', help='Limit resursive search depth (Default: 5 give "-l -1" to remove limit)', type=int)
+	parser.add_argument('-o', '--output', metavar='', help='Output result into a file.', type=str)
+	parser.add_argument('--settings', metavar='', help='Custom direcotry for setings file.', type=str, default='settings.json')
+	
+	args = parser.parse_args()
+
+	with open(args.settings) as jfile:
 		jdata = json.load(jfile)
-	main()
+	main(args)
 	
